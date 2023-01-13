@@ -2,11 +2,13 @@ import os
 import asyncio
 import discord
 import config
+import db
 from datetime import datetime, timedelta
 
 client = discord.Client(intents=discord.Intents.all())
 SERVER_ID = config.SERVER_ID
 
+db.create_tables()
 
 @client.event
 async def on_ready():
@@ -23,10 +25,14 @@ start_times = {}
 @client.event
 async def on_presence_update(before, after):
   if after.guild.id == SERVER_ID:
+    
+    server = client.get_guild(SERVER_ID)
+    db.insert_guild(SERVER_ID, server.name)
 
     if after.bot:
         return
-      
+    
+    db.insert_user(after.id, after.name)
     # START PLAYING
     for activity in after.activities:
       # Check if the user is playing a game and that the user wasn't previously playing any game
