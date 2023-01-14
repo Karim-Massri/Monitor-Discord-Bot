@@ -116,4 +116,9 @@ async def on_presence_update(before, after):
       if channel is not None:
         await channel.send(f'{after.name} just went online! (ID: {after.id})')
 
+    # Remove a user from the dictionary if he became offline before quitting the game
+    if before.activity is not None and before.activity.type == discord.ActivityType.playing and before.id in start_times and after.activity is None:
+      start_times.pop(before.id)
+
+
 client.run(config.TOKEN)
