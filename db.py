@@ -19,13 +19,13 @@ def create_tables():
     # Create the user_games table
     cursor.execute('''CREATE TABLE IF NOT EXISTS user_games (
                     user_id INTEGER,
-                    game_id INTEGER,
+                    game_name TEXT,
                     start_time TIMESTAMP,
                     stop_time TIMESTAMP,
                     duration INTEGER,
                     FOREIGN KEY (user_id) REFERENCES users(id),
-                    FOREIGN KEY (game_id) REFERENCES games(game_name),
-                    UNIQUE (user_id, game_id, start_time))''')
+                    FOREIGN KEY (game_name) REFERENCES games(game_name),
+                    UNIQUE (user_id, game_name, start_time))''')
 
     # Create the guilds table
     cursor.execute('''CREATE TABLE IF NOT EXISTS guilds (
@@ -44,12 +44,12 @@ def create_tables():
     cursor.execute('''CREATE TABLE IF NOT EXISTS logs (
                         id INTEGER PRIMARY KEY,
                         user_id INTEGER,
-                        game_id INTEGER,
+                        game_name TEXT,
                         guild_id INTEGER,
                         log_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         log_type TEXT,
                         FOREIGN KEY (user_id) REFERENCES users(id),
-                        FOREIGN KEY (game_id) REFERENCES games(id),
+                        FOREIGN KEY (game_name) REFERENCES games(game_name),
                         FOREIGN KEY (guild_id) REFERENCES guilds(id))''')
     connection.commit()
     connection.close()
@@ -64,7 +64,7 @@ def insert_user(id:int, username:str):
 def insert_game(name:str):
     connection = connect()
     cursor = connection.cursor()
-    cursor.execute('''INSERT OR IGNORE INTO games(game_name) VALUES(?)''', (name))
+    cursor.execute('''INSERT OR IGNORE INTO games(game_name) VALUES(?)''', (name,))
     connection.commit()
     connection.close()
 

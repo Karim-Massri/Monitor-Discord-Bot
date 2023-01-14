@@ -20,6 +20,26 @@ async def on_ready():
   print(f'Monitoring {server.name}')
   print('------')
 
+   # Iterate through all guilds the bot is a member of
+  for guild in client.guilds:
+      # Iterate through all members in the guild
+      for member in guild.members:
+          # Check if the member is not a bot
+          if not member.bot:
+              # Insert the member and guild into the user_guild table
+              join_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+              db.insert_user_guild(member.id, guild.id, join_date)
+
+@client.event
+async def on_member_join(member):
+    # check if the member is not a bot
+    if not member.bot:
+        # Get the current time as the join date
+        join_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Insert the user and guild into the user_guild table
+        db.insert_user_guild(member.id, member.guild.id, join_date)
+
+
 start_times = {}
 
 @client.event
@@ -42,7 +62,7 @@ async def on_presence_update(before, after):
         db.insert_game(activity.name)
 
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        play_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        play_time = datetime.now()
         # Add an entry to the start_times dictionary with the user's ID as the key and the current time as the value
         start_times[after.id] = play_time
         # Get the channel object for the channel you want to send the message to
@@ -59,7 +79,7 @@ async def on_presence_update(before, after):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
         # Get the current time
-        play_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        play_time = datetime.now()
         if before.id in start_times:
           # Get the start time for the user from the start_times dictionary
           start_time = start_times[before.id]          
@@ -70,7 +90,12 @@ async def on_presence_update(before, after):
           days, remainder = divmod(total_seconds, 86400)
           hours, remainder = divmod(remainder, 3600)
           minutes, seconds = divmod(remainder, 60)
-          db.insert_user_game(before.id, activity.name, start_time, play_time, total_playtime)
+
+          duration = int(total_seconds)
+          start_time_str = start_time.strftime("%Y-%m-%d %H:%M:%S")
+          stop_time_str = play_time.strftime("%Y-%m-%d %H:%M:%S")
+
+          db.insert_user_game(before.id, activity.name, start_time_str, stop_time_str, duration)
           # Format the timedelta as a string in the HH:MM:SS format
           formatted_playtime = f'{int(days)} days, {int(hours):02}:{int(minutes):02}:{int(seconds):02}'
           start_times.pop(before.id)
