@@ -37,9 +37,12 @@ async def on_presence_update(before, after):
     for activity in after.activities:
       # Check if the user is playing a game and that the user wasn't previously playing any game
       if activity.type == discord.ActivityType.playing and not before.activities:
-        current_time = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-        play_time = datetime.now()
+        # Insert game to db
+        db.insert_game(activity.name)
+
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        play_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # Add an entry to the start_times dictionary with the user's ID as the key and the current time as the value
         start_times[after.id] = play_time
         # Get the channel object for the channel you want to send the message to
@@ -53,10 +56,10 @@ async def on_presence_update(before, after):
     for activity in before.activities:
       #Check if the user is not playing a game, the previous activity was playing, the start_time is recorded and the current activity is None
       if before.activity is not None and before.activity.type == discord.ActivityType.playing and before.id in start_times and after.activity is None:
-        current_time = datetime.now().strftime('%d/%m/%Y %H:%M')
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
         # Get the current time
-        play_time = datetime.now()
+        play_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if before.id in start_times:
           # Get the start time for the user from the start_times dictionary
           start_time = start_times[before.id]          
@@ -67,7 +70,7 @@ async def on_presence_update(before, after):
           days, remainder = divmod(total_seconds, 86400)
           hours, remainder = divmod(remainder, 3600)
           minutes, seconds = divmod(remainder, 60)
-      
+          db.insert_user_game(before.id, activity.name, start_time, play_time, total_playtime)
           # Format the timedelta as a string in the HH:MM:SS format
           formatted_playtime = f'{int(days)} days, {int(hours):02}:{int(minutes):02}:{int(seconds):02}'
           start_times.pop(before.id)
