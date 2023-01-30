@@ -115,7 +115,7 @@ async def on_presence_update(before, after):
       # The user just went online
       channel = client.get_channel(config.statusChannelID)
       print('ONLINE Event triggered')
-      db.insert_log(after.id, 0, SERVER_ID, "ONLINE")
+      db.insert_log(after.id, 'NULL', SERVER_ID, "ONLINE")
       if channel is not None:
         await channel.send(f'{after.name} just went online! (ID: {after.id})')
 
@@ -123,7 +123,7 @@ async def on_presence_update(before, after):
       # The user just went offline
       channel = client.get_channel(config.statusChannelID)
       print('OFFLINE Event triggered')
-      db.insert_log(before.id, 0, SERVER_ID, "OFFLINE")
+      db.insert_log(before.id, 'NULL', SERVER_ID, "OFFLINE")
       if channel is not None:
         await channel.send(f'{before.name} just went offline! (ID: {before.id})')
 

@@ -44,7 +44,7 @@ def create_tables():
     cursor.execute('''CREATE TABLE IF NOT EXISTS logs (
                         id INTEGER PRIMARY KEY,
                         user_id INTEGER,
-                        game_name TEXT,
+                        game_name TEXT DEFAULT 'NULL',
                         guild_id INTEGER,
                         log_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         log_type TEXT,
@@ -89,9 +89,9 @@ def insert_user_guild(user_id:int, guild_id:int, join_date:str):
     connection.commit()
     connection.close()
 
-def insert_log(user_id:int, game_id:int, guild_id:int, log_type:str):
+def insert_log(user_id:int, game_name:int, guild_id:int, log_type:str):
     connection = connect()
     cursor = connection.cursor()
-    cursor.execute('''INSERT INTO logs(user_id, game_id, guild_id, log_type) VALUES(?,?,?,?)''', (user_id, game_id, guild_id, log_type))
+    cursor.execute('''INSERT INTO logs(user_id, game_name, guild_id, log_type) VALUES(?,?,?,?)''', (user_id, game_name, guild_id, log_type))
     connection.commit()
     connection.close()
