@@ -20,7 +20,7 @@ async def on_ready():
   print(f'Monitoring {server.name}')
   print('------')
 
-   # Iterate through all guilds the bot is a member of
+  # Iterate through all guilds the bot is a member of
   for guild in client.guilds:
       # Iterate through all members in the guild
       for member in guild.members:
@@ -56,7 +56,7 @@ async def on_presence_update(before, after):
     # START PLAYING
     for activity in after.activities:
       # Check if the user is playing a game and that the user wasn't previously playing any game
-      if activity.type == discord.ActivityType.playing:
+      if activity.type == discord.ActivityType.playing and after.id not in start_times:
         if  before.activity is None or activity.type != discord.ActivityType.custom:
 
           # Insert game to db
