@@ -1,2 +1,5 @@
 config.py
-.pyc
+__pycache__/
+*.pyc
+*.db
+*.sql
