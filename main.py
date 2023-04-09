@@ -4,6 +4,7 @@ import discord
 import config
 import db
 from datetime import datetime, timedelta
+from discord import Spotify
 
 client = discord.Client(intents=discord.Intents.all())
 SERVER_ID = config.SERVER_ID
@@ -59,25 +60,43 @@ async def on_presence_update(before, after):
       if activity.type == discord.ActivityType.playing and after.id not in start_times:
         if  before.activity is None or activity.type != discord.ActivityType.custom:
 
-          # Insert game to db
-          db.insert_game(activity.name)
+          print(f"STARTED: {after.name}")
+          print(f"ACTIVITIES: {after.activities}")
+          print(activity)
 
-          current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-          play_time = datetime.now()
-          # Add an entry to the start_times dictionary with the user's ID as the key and the current time as the value
-          start_times[after.id] = play_time
-          # Get the channel object for the channel you want to send the message to
-          channel = client.get_channel(config.gameChannelID)
-          # Send the message to the channel, including the user's name
-          await channel.send(
-            f'**{after.name}** started playing **"{activity.name}"** at **"{current_time}"**! (ID: {after.id})'
-          )
+          thistuple = after.activities
+          for i in range(len(thistuple)):
+            print(f"Tuple {i}: {thistuple[i]}")         
+            print(f"TUPLE: {after.activities[i]}")
+            if isinstance(after.activities[i], Spotify):
+              print('discord should detect spotify here') #TRUE
+
+          # Check if there is a Spotify activity in the tuple (TEMP SOLUTION)
+          for act in after.activities:
+            if isinstance(act, Spotify):
+              break
+            else:
+              # Insert game to db
+              db.insert_game(activity.name)
+
+              current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+              play_time = datetime.now()
+              # Add an entry to the start_times dictionary with the user's ID as the key and the current time as the value
+              start_times[after.id] = play_time
+              # Get the channel object for the channel you want to send the message to
+              channel = client.get_channel(config.gameChannelID)
+              # Send the message to the channel, including the user's name
+              await channel.send(
+                f'**{after.name}** started playing **"{activity.name}"** at **"{current_time}"**! (ID: {after.id})'
+              )
+
 
     # STOP PLAYING
     for activity in before.activities:
       #Check if the user is not playing a game, the previous activity was playing, the start_time is recorded and the current activity is None
       if activity.type == discord.ActivityType.playing and before.id in start_times:
         if after.activity is None or after.activity.type != discord.ActivityType.playing:
+
           current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
       
           # Get the current time
