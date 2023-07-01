@@ -5,6 +5,7 @@ import config
 import db
 from datetime import datetime, timedelta
 from discord import Spotify
+import sqlite3
 
 client = discord.Client(intents=discord.Intents.all())
 SERVER_ID = config.SERVER_ID
@@ -43,6 +44,8 @@ async def on_member_join(member):
 
 start_times = {}
 
+# Gathering Data
+
 @client.event
 async def on_presence_update(before, after):
   if after.guild.id == SERVER_ID:
@@ -59,17 +62,6 @@ async def on_presence_update(before, after):
       # Check if the user is playing a game and that the user wasn't previously playing any game
       if activity.type == discord.ActivityType.playing and after.id not in start_times:
         if  before.activity is None or activity.type != discord.ActivityType.custom:
-
-          print(f"STARTED: {after.name}")
-          print(f"ACTIVITIES: {after.activities}")
-          print(activity)
-
-          thistuple = after.activities
-          for i in range(len(thistuple)):
-            print(f"Tuple {i}: {thistuple[i]}")         
-            print(f"TUPLE: {after.activities[i]}")
-            if isinstance(after.activities[i], Spotify):
-              print('discord should detect spotify here') #TRUE
 
           # Check if there is a Spotify activity in the tuple (TEMP SOLUTION)
           for act in after.activities:
@@ -149,5 +141,91 @@ async def on_presence_update(before, after):
     # Remove a user from the dictionary if he became offline before quitting the game
     if before.activity is not None and before.activity.type == discord.ActivityType.playing and before.id in start_times and after.activity is None:
       start_times.pop(before.id)
+
+# ---- COMMANDS ----
+
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+      return
+    
+    # Messages
+    if message.content == "!monitor":
+      user_id = message.author.id
+      
+
+      # Open the database connection
+      conn = sqlite3.connect('discordbot.db')
+      cursor = conn.cursor()
+      # Get the games played (with the duration) by the user in the last 24 hours
+      query = """
+      SELECT user_games.game_name, SUM(user_games.duration) AS total_play_time
+      FROM user_games
+      WHERE user_id = ? AND stop_time >= datetime('now', '-24 hours')
+      GROUP BY user_games.game_name
+      """
+
+      cursor.execute(query, (user_id,))
+      result = cursor.fetchall()
+
+      if result:
+          total_seconds = sum(play_time for _, play_time in result)
+          total_minutes, seconds = divmod(total_seconds, 60)
+          total_hours, minutes = divmod(total_minutes, 60)
+          game_names = [game_name for game_name, _ in result]
+          game_list = ', '.join(game_names)
+
+          response = f"**{message.author.name}** spent {total_hours} hours, {minutes} minutes, and {seconds} seconds playing {game_list} in the last 24 hours."
+      else:
+          response = f"No play time data found for **{message.author.name}** in the last 24 hours."
+
+      await message.channel.send(response)
+
+      # Close the database connection
+      cursor.close()
+      conn.close()
+    
+    # Detailed Messages
+    if message.content == "!monitor detail":
+        user_id = message.author.id
+
+        # Open the database connection
+        conn = sqlite3.connect('discordbot.db')
+        cursor = conn.cursor()
+
+        query = """
+        SELECT user_games.game_name, SUM(user_games.duration) AS total_play_time
+        FROM user_games
+        WHERE user_id = ? AND stop_time >= datetime('now', '-24 hours')
+        GROUP BY user_games.game_name
+        """
+
+        cursor.execute(query, (user_id,))
+        result = cursor.fetchall()
+
+        if result:
+            playtime_details = []
+            total_seconds = 0
+
+            for game_name, play_time in result:
+                total_seconds += play_time
+                hours, remainder = divmod(play_time, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                playtime_details.append(f"**{game_name}**: {hours} hours, {minutes} minutes, {seconds} seconds")
+
+            total_minutes, seconds = divmod(total_seconds, 60)
+            total_hours, minutes = divmod(total_minutes, 60)
+
+            game_list = "\n".join(playtime_details)
+            response = f"**{message.author.name}** spent {total_hours} hours, {minutes} minutes, and {seconds} seconds playing the following games in the last 24 hours:\n\n{game_list}"
+        else:
+            response = f"No playtime data found for **{message.author.name}** in the last 24 hours."
+
+        await message.channel.send(response)
+
+        # Close the database connection
+        cursor.close()
+        conn.close()
+
 
 client.run(config.TOKEN)
