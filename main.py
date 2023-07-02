@@ -299,5 +299,9 @@ async def on_message(message):
       cursor.close()
       conn.close()
 
+    if message.content == "!monitor help":
+      help_msg = "Monitor has the following commands:\n**!monitor**: Displays the total playtime and a list of games played by the user in the last 24 hours.\n**!monitor detail**: Provides detailed information about the user's playtime for each game played in the last 24 hours.\n**!monitor graph**: Generates and sends a graph showing the user's daily playtime over the past week, highlighting the number of hours played each day."
+      await message.channel.send(help_msg)
+
 
 client.run(config.TOKEN)
